@@ -1,6 +1,7 @@
 var express = require('express'),
     bcrypt = require('bcrypt'),
-    generateToken = require('../utils/token');
+    generateToken = require('../utils/token'),
+    verifyToken = require('../middleware/verifyToken');
 
 var routes = function(User) {
     var userRouter = express.Router();
@@ -17,7 +18,6 @@ var routes = function(User) {
                 if (err) return res.status(500).send(err)
 
                 var token = generateToken(user);
-                console.log({user: user, token: token})
                 res.status(200).send({user: user, token: token})
             });
         });
@@ -36,7 +36,21 @@ var routes = function(User) {
                 }
             })
         })
+    
+    userRouter.route('/auth')
+        .get(verifyToken, function(req,res) {
+            User.findById(req.userId, function (err, user) {
+                if (err) {
+                    return res.status(500).send("Could not find user");
+                }
+                if (!user) {
+                    return res.status(404).send("User not found");
+                }
 
+                res.status(200).send(user);
+            })
+        })
+    
     return userRouter
 };
 
